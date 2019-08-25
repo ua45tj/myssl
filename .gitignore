@@ -1,0 +1,4 @@
+myapp/myapp
+*.o
+lib*.so
+lib*.so.*

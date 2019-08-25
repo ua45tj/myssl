@@ -1,0 +1,56 @@
+#!/bin/sh
+
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+
+echo "Running script..."
+
+# Components:
+# - myapp needs libmycurl.so.1
+# - libmycurl.so.1.0.0 needs libmyssl.1
+# - libmyssl.so.1.0.2
+# - libmyssl.so.1.1.1
+
+# build myssl 1.1.1
+# build myssl 1.0.2
+# install myssl 1.1.1 to the system
+# install myssl 1.0.2 to a folder
+# build mycurl 1.0.0
+# install mycurl to the system
+# build myapp
+
+################################################################################
+
+cd ${DIR}/myssl-1.0.2 \
+  && gcc -Wall -fPIC -c myssl.c -Iinclude \
+  && gcc -shared -Wl,-soname,libmyssl.so.1 -o libmyssl.so.1.0.2 myssl.o \
+  && ln -sf libmyssl.so.1.0.2 libmyssl.so.1 \
+  && ln -sf libmyssl.so.1.0.2 libmyssl.so
+
+cd ${DIR}/myssl-1.1.1 \
+  && gcc -Wall -fPIC -c myssl.c -Iinclude \
+  && gcc -shared -Wl,-soname,libmyssl.so.1 -o libmyssl.so.1.1.1 myssl.o \
+  && sudo cp libmyssl.so.1.1.1 /usr/local/lib \
+  && sudo cp include/myssl.h /usr/local/include \
+  && cd /usr/local/lib \
+  && sudo ln -sf libmyssl.so.1.1.1 libmyssl.so.1 \
+  && sudo ln -sf libmyssl.so.1.1.1 libmyssl.so
+
+cd ${DIR}/mycurl \
+  && gcc -Wall -fPIC -c mycurl.c -Iinclude \
+  && gcc -shared -Wl,-soname,libmycurl.so.1 -o libmycurl.so.1.0 mycurl.o -lmyssl \
+  && sudo cp libmycurl.so.1.0 /usr/local/lib \
+  && sudo cp include/mycurl.h /usr/local/include \
+  && cd /usr/local/lib \
+  && sudo ln -sf libmycurl.so.1.0 libmycurl.so.1 \
+  && sudo ln -sf libmycurl.so.1.0 libmycurl.so
+
+cd ${DIR}/myapp && gcc myapp.c -o myapp -lmycurl
+
+
+# LD_LIBRARY_PATH=/usr/local/lib myapp/myapp
+#
+# sudo ldconfig
+# myapp/myapp
+#
+# LD_LIBRARY_PATH=/home/ua45tj/sandbox/ssl/myssl-1.0.2 myapp/myapp
+# LD_LIBRARY_PATH=/home/ua45tj/sandbox/ssl/myssl-1.0.2 ldd myapp/myapp
