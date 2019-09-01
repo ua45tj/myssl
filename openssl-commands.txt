@@ -1,0 +1,7 @@
+openssl genpkey -algorithm EC -out eckey.pem -pkeyopt ec_paramgen_curve:P-256
+openssl pkey -in eckey.pem -noout -text
+cat eckey.pem | head -n -1 | tail -n +2 | tr -d '\n' | base64 -d | hexdump -C
+openssl pkey -in eckey.pem -outform der -out eckey.der
+dd if=/dev/zero of=eckey.der seek=7 conv=notrunc count=32 bs=1
+openssl pkey -inform der -in eckey.der -noout -text
+openssl pkey -inform der -in eckey.der -outform pem -out patched-eckey.pem
